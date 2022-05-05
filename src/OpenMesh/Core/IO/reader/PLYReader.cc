@@ -529,7 +529,7 @@ bool _PLYReader_::read_ascii(std::istream& _in, BaseImporter& _bi, const Options
       omerr().enable();
 
     if (complex_faces)
-      omerr() << complex_faces << "The reader encountered invalid faces, that could not be added.\n";
+      omerr() << "The reader encountered invalid faces (" << complex_faces << "), that could not be added.\n";
 
     // File was successfully parsed.
     return true;
@@ -783,7 +783,7 @@ bool _PLYReader_::read_binary(std::istream& _in, BaseImporter& _bi, bool /*_swap
       omerr().enable();
 
    if (complex_faces)
-      omerr() << complex_faces << "The reader encountered invalid faces, that could not be added.\n";
+      omerr() << "The reader encountered invalid faces (" << complex_faces << "), that could not be added.\n";
 
 
     return true;
@@ -1298,7 +1298,7 @@ bool _PLYReader_::can_u_read(std::istream& _is) const {
               if (!elements_.back().properties_.empty())
               {
                 omerr() << "Custom face Properties defined, before 'vertex_indices' property was defined. They will be skipped" << std::endl;
-                elements_.back().properties_.clear();
+                //elements_.back().properties_.clear();
               }
             } else {
               options_ += Options::Custom;

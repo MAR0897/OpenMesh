@@ -633,6 +633,21 @@ TEST_F(OpenMeshReadWritePLY, LoadSimplePLYWithCustomProps) {
 
 }
 
+TEST_F(OpenMeshReadWritePLY, LoadWithFacePropertyBeforeVertexList) {
+    PolyMesh mesh;
+
+    OpenMesh::IO::Options options;
+    options += OpenMesh::IO::Options::Custom;
+
+    bool ok = OpenMesh::IO::read_mesh(mesh, "property_before_face_vertex_list.ply", options);
+
+    EXPECT_TRUE(ok) << "Unable to load property_before_face_vertex_list.ply";
+
+    EXPECT_EQ(3u  , mesh.n_vertices()) << "The number of loaded vertices is not correct!";
+    EXPECT_EQ(3u , mesh.n_edges()) << "The number of loaded edges is not correct!";
+    EXPECT_EQ(1u , mesh.n_faces()) << "The number of loaded faces is not correct!";
+}
+
 /*
  * Just load a ply with custom properties, binary mode
  */
