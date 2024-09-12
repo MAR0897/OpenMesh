@@ -953,8 +953,10 @@ PolyConnectivity::insert_edge(HalfedgeHandle _prev_heh, HalfedgeHandle _next_heh
 }
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void PolyConnectivity::triangulate(FaceHandle _fh)
 {
+
   /*
     Split an arbitrary face into triangles by connecting
     each vertex of fh after its second to vh.
