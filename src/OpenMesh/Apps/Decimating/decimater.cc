@@ -75,6 +75,7 @@
 #include <OpenMesh/Tools/Decimater/ModProgMeshT.hh>
 #include <OpenMesh/Tools/Decimater/ModIndependentSetsT.hh>
 #include <OpenMesh/Tools/Decimater/ModRoundnessT.hh>
+#include <OpenMesh/Tools/Decimater/ModLindTurkT.hh>
 
 //----------------------------------------------------------------- traits ----
 
@@ -100,7 +101,7 @@ typedef OpenMesh::Decimater::DecimaterT<ArrayTriMesh>   Decimater;
 
 //---------------------------------------------------------------- globals ----
 
-int gverbose = 0;
+int gverbose = 1;
 int gdebug   = 0;
 
 
@@ -130,8 +131,10 @@ struct DecOptions
   CmdOption<float>       ND;   // Normal deviation
   CmdOption<float>       NF;   // Normal flipping
   CmdOption<std::string> PM;   // Progressive Mesh
-  CmdOption<float>       Q;    // Quadrics
+  CmdOption<std::string> Q;    // Quadrics = Garland-Heckbert
   CmdOption<float>       R;    // Roundness
+  CmdOption<std::string> LT;   // Lind-Turk
+  CmdOption<std::string> SP;   // Spectral simplification
 
   template <typename T>
   bool init( CmdOption<T>& _o, const std::string& _val )
@@ -179,6 +182,8 @@ struct DecOptions
     if (name == "PM") return init(PM, value);
     if (name == "Q")  return init(Q,  value);
     if (name == "R")  return init(R,  value);
+    if (name == "LT") return init(LT, value);
+    if (name == "SP") return init(SP, value);
     return false;
   }
 
@@ -322,7 +327,8 @@ decimate(const std::string &_ifname,
      {
        decimater.add(modQ);
        if (_opt.Q.has_value())
-         decimater.module( modQ ).set_max_err( _opt.Q );
+         //decimater.module( modQ ).set_max_err( _opt.Q );
+         decimater.module(modQ).set_opts( _opt.Q );
        decimater.module(modQ).set_binary(false);
      }
 
@@ -336,6 +342,27 @@ decimate(const std::string &_ifname,
              !modQ.is_valid() ||
              !decimater.module(modQ).is_binary());
      }
+     
+     typename OpenMesh::Decimater::ModLindTurkT<Mesh>::Handle        modLT;
+
+     if (_opt.LT.is_enabled())
+     {
+       decimater.add(modLT);
+       if (_opt.LT.has_value())
+         decimater.module( modLT ).set_opts( _opt.LT );
+     }
+
+    //  typename OpenMesh::Decimater::ModSpectralT<Mesh>::Handle        modSP;
+
+    //  if (_opt.SP.is_enabled())
+    //  {
+    //    decimater.add(modSP);
+    //    if (_opt.SP.has_value())
+    //      decimater.module( modSP ).set_opts( _opt.SP );
+    //  }
+
+
+     
 
      // ---- 3 - initialize decimater
 
@@ -382,8 +409,8 @@ decimate(const std::string &_ifname,
 
      // ---- 5 - write progmesh file for progviewer (before garbage collection!)
 
-     if ( _opt.PM.has_value() )
-       decimater.module(modPM).write( _opt.PM );
+      if ( _opt.PM.has_value() )
+        decimater.module(modPM).write( _opt.PM );
 
      // ---- 6 - throw away all tagged edges
 
@@ -554,6 +581,7 @@ void usage_and_exit(int xcode)
   std::cerr << "  PM[:file name]  - ModProgMesh\n";
   std::cerr << "  Q[:error]       - ModQuadric*\n";
   std::cerr << "  R[:angle]       - ModRoundness\n";
+  std::cerr << "  LT[:lock,lambda,angle]     - ModLindTurk(def lock = false, def lambda = 0.5, def alpha = 0.01745329251)\n";
   std::cerr << "    0 < angle < 60\n";
   std::cerr << "  *: priority module. Decimater needs one of them (not more).\n";
 
