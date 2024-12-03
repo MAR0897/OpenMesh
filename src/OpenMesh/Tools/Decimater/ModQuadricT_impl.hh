@@ -57,10 +57,12 @@
 
 #include <OpenMesh/Tools/Decimater/ModQuadricT.hh>
 
+
 //== NAMESPACE ===============================================================
 
 namespace OpenMesh { // BEGIN_NS_OPENMESH
 namespace Decimater { // BEGIN_NS_DECIMATER
+
 
 //== IMPLEMENTATION ==========================================================
 

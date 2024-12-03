@@ -67,6 +67,7 @@
 namespace OpenMesh  {
 namespace Decimater {
 
+
 //== CLASS DEFINITION =========================================================
 
 
@@ -144,6 +145,7 @@ public: // inherited
 
   /// set the percentage of maximum quadric error
   void set_error_tolerance_factor(double _factor) override;
+
 
 
 public: // specific methods

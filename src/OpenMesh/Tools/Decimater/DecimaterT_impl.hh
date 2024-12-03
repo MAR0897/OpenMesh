@@ -161,7 +161,6 @@ size_t DecimaterT<Mesh>::decimate(size_t _n_collapses, bool _only_selected) {
   typedef std::vector<typename Mesh::VertexHandle> Support;
   typedef typename Support::iterator SupportIterator;
 
-  //Support support(15);
   Support support;
   SupportIterator s_it, s_end;
 
@@ -251,6 +250,8 @@ size_t DecimaterT<Mesh>::decimate(size_t _n_collapses, bool _only_selected) {
 
   // delete heap
   heap_.reset();
+
+
 
   // DON'T do garbage collection here! It's up to the application.
   return n_collapses;
