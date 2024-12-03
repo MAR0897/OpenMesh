@@ -396,8 +396,8 @@ decimate(const std::string &_ifname,
 
      // ---- 5 - write progmesh file for progviewer (before garbage collection!)
 
-      if ( _opt.PM.has_value() )
-        decimater.module(modPM).write( _opt.PM );
+     if ( _opt.PM.has_value() )
+       decimater.module(modPM).write( _opt.PM );
 
      // ---- 6 - throw away all tagged edges
 
