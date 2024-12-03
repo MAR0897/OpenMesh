@@ -40,39 +40,50 @@
  * ========================================================================= */
 
 
+/** \file ModMemorylessT.hh
+ */
+
 //=============================================================================
 //
-//  CLASS ModLindTurkT
+//  CLASS ModMemorylessT
 //
 //=============================================================================
-#ifndef OSG_MODLINDTURK_HH
-#define OSG_MODLINDTURK_HH
+
+#ifndef OSG_MODMEMORYLESS_HH
+#define OSG_MODMEMORYLESS_HH
+
 //== INCLUDES =================================================================
+
 #include <float.h>
 #include <OpenMesh/Tools/Decimater/ModBaseT.hh>
 #include <OpenMesh/Core/Utils/Property.hh>
 #include <OpenMesh/Core/Utils/vector_cast.hh>
 #include <Eigen/Dense>
+
 //== NAMESPACE ================================================================
+
 namespace OpenMesh  {
 namespace Decimater {
+
 //== CLASS DEFINITION =========================================================
 
 /** \brief Mesh decimation module computing collapse priority based on 
- *  Memoryless simplification algorithm by Peter Lindstrom and Greg Turk 
+ *  Memoryless simplification algorithm by Peter Lindstrom and Greg Turk.
+ *  (Fast and memory efficient polygonal simplification, 1998) 
+ * 
  */
 template <class MeshT>
-class ModLindTurkT : public ModBaseT<MeshT>
+class ModMemorylessT : public ModBaseT<MeshT>
 {
 public:
 
   // Defines the types Self, Handle, Base, Mesh, and CollapseInfo
   // and the memberfunction name()
-  DECIMATING_MODULE( ModLindTurkT, MeshT, LindTurk );
+  DECIMATING_MODULE( ModMemorylessT, MeshT, Memoryless );
 
 public:
 
-   explicit ModLindTurkT( MeshT &_mesh )
+   explicit ModMemorylessT( MeshT &_mesh )
     : Base(_mesh, false)
   {
     // Add needed mesh properties
@@ -85,8 +96,9 @@ public:
     Base::mesh().add_property(FProps);
   }
   
-  virtual ~ModLindTurkT()
+  virtual ~ModMemorylessT()
   {
+    // Remove properties after simplification is done
     Base::mesh().remove_property(is_locked);
     Base::mesh().remove_property(error_calculated);
     Base::mesh().remove_property(n_);
@@ -122,37 +134,26 @@ public: // inherited
     for (; vf_it.is_valid(); ++vf_it) calc_face_normal_and_det(*vf_it);
   }
 
+public: // specific methods
 
+  // Parse simplification parameters string
   void set_opts(std::string opts)
   {
-     //parse 1st option (lock boundary edges)
-    size_t pos = opts.find(",");
-    bool lock;
-    std::string first = opts.substr(0, pos);            
-    if (first == "true" or first == "false") {
-      std::istringstream(first) >> std::boolalpha >> lock;
-      set_lock(lock);
-    }
-    else if (first.size() == 0) {}
-    else std::cerr << "Invalid first LT option - either \"true\" or \"false\" required, default value (false) was set." << std::endl;
+    std::istringstream str(opts);
+    std::string cut;
 
-    if (pos != std::string::npos) {
-      opts.erase(0, pos+1);
-      std::cout<<"String: "<<opts<<std::endl;
-      //parse 2nd option (lambda - final error calculation weight)
-      if (pos != std::string::npos) {
-        size_t pos = opts.find(",");
-        auto second = opts.substr(0, pos);
-        if (second.size() != 0) set_min_mod(std::stoi(second));
-        opts.erase(0, pos+1); 
-      }
-      //parse 3rd option (alpha - angle to which planes are taken as coplanar)
-      if (!opts.empty()) {
-        //set_alpha(std::stod(opts));
-        opts.erase(0, pos+1); 
-      }
+    if (std::getline(str, cut, ',')) {
+      // set first parameter (ideal collapse vertex finding mode)
+      int cutn = std::stoi(cut);
+      if (cutn == 0 or cutn == 1) set_min_mod(cutn);
+      else std::cout << "Incorrect value for error minimalization mode (first parameter), going with 0" << "\n"
+                     << "Permitted values: 0 and 1" << "\n"
+                     << "0 = Original Lindstrom-Turk memoryless simplification,\
+                         looking for ideal collapse vertex in 3D space" << "\n"
+                     << "1 = Looking for ideal vertex only on line determined by v0 and v1" << std::endl;
     }
-    //else set_alpha();
+    // set second parameter (boundary lock)
+    if (std::getline(str, cut, ',')) set_lock(std::stof(cut));
   }
 
  
@@ -160,10 +161,11 @@ private:
 
   // ------Private functions---------------------------------------------------
   
+
   /** \brief If the 'lock_boundary_edges' parameter is set to true, the module
    * will preserve the mesh boundary.
    * 
-   * \details Check 'initilize' function for details.
+   * \details Check 'initialize' function for details.
    */
   void set_lock(double _lock) { lock_boundary_edges = _lock; }
 
@@ -210,10 +212,14 @@ private:
    */
   void calc_face_normal_and_det(const FaceHandle& fh);
 
+
+  /** \brief Function for casting vertex coordinates to Eigen vector
+   */
   inline Eigen::Vector3d eigenvec_cast(const VertexHandle& v) {
     DefaultTraits::Point p = Base::mesh().point(v);
     return Eigen::Vector3d(p[0], p[1], p[2]);
   }
+
 
 
   // ------Parameters of the decimating module---------------------------------
@@ -225,7 +231,7 @@ private:
    */
   bool lock_boundary_edges = false;  
 
-  // constrait compatibility parameter
+  // constraint compatibility parameters
   double  SINALPHA = std::sin(0.01745329251),
           COSALPHA = std::cos(0.01745329251);
 
@@ -235,6 +241,8 @@ private:
   enum decimation_mode { SPACE = 0, LINE = 1 };
   decimation_mode mod = SPACE;
 
+  /** \brief Sets the mode for finding ideal collapse vertex
+   */
   void set_min_mod(const int& mod_) {
     switch(mod_){
       case 0: mod = SPACE;break;
@@ -242,6 +250,8 @@ private:
       default:mod = SPACE;break;
     }
   }
+
+
 
   // ------Properties of each halfedge-----------------------------------------
 
@@ -268,8 +278,7 @@ private:
   HPropHandleT<size_t> n_;
 
   /** Storage for all valid constraints acquired for given halfedge during the 
-   * error calculation.
-   * (matrix A)
+   * error calculation. (= matrix A)
    */
   HPropHandleT<Eigen::Matrix3d> constraints;
 
@@ -277,11 +286,11 @@ private:
   HPropHandleT<Eigen::Vector3d> rhs;
 
   /** Ideal vertex position after collapse
-   * Solution to equation Av=b
-   * solved using: v = A^(-1) * b
+   * Solution to equation Av=b solved using: v = A^(-1) * b
    */
   HPropHandleT<DefaultTraits::Point> ideal_vertex_coords;
 
+  // Storage for basic face properties to save repeating calculations
   struct FaceProps {
 
     double det;                         // determinant of vertices of the face
@@ -290,7 +299,7 @@ private:
     Eigen::Vector3d det_dot_normal;     // determinant*normal
     Eigen::Matrix3d face_normal_matrix; // normal*normal^T
   };
-
+  // Declaring the struct as a face property
   FPropHandleT<FaceProps> FProps;
 };
 
@@ -298,10 +307,10 @@ private:
 } // END_NS_DECIMATER
 } // END_NS_OPENMESH
 //=============================================================================
-#if defined(OM_INCLUDE_TEMPLATES) && !defined(OPENMESH_DECIMATER_MODLINDTURK_CC)
-#define OSG_MODLINDTURK_TEMPLATES
-#include "ModLindTurkT_impl.hh"
+#if defined(OM_INCLUDE_TEMPLATES) && !defined(OPENMESH_DECIMATER_MODMEMORYLESS_CC)
+#define OSG_MODMEMORYLESS_TEMPLATES
+#include "ModMemorylessT_impl.hh"
 #endif
 //=============================================================================
-#endif // OSG_MODLINDTURK_HH defined
+#endif // OSG_MODMEMORYLESS_HH defined
 //=============================================================================

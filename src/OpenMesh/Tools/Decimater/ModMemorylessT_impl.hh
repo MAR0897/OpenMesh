@@ -40,17 +40,20 @@
  * ========================================================================= */
 
 
+/** \file ModMemorylessT_impl.hh
+ */
+
 //=============================================================================
 //
-//  CLASS ModLindTurk - IMPLEMENTATION
+//  CLASS ModMemoryless - IMPLEMENTATION
 //
 //=============================================================================
 
-#define OPENMESH_DECIMATER_MODLINDTURK_CC
+#define OPENMESH_DECIMATER_MODMEMORYLESS_CC
 
 //== INCLUDES =================================================================
 
-#include <OpenMesh/Tools/Decimater/ModLindTurkT.hh>
+#include <OpenMesh/Tools/Decimater/ModMemorylessT.hh>
 
 //== NAMESPACE ================================================================
 
@@ -61,7 +64,7 @@ namespace Decimater { // BEGIN_NS_DECIMATER
 
 template<class DecimaterType>
 void
-ModLindTurkT<DecimaterType>::
+ModMemorylessT<DecimaterType>::
 initialize()
 {
     if (!is_locked.is_valid()) Base::mesh().add_property(is_locked);
@@ -72,6 +75,14 @@ initialize()
     if (!ideal_vertex_coords.is_valid()) Base::mesh().add_property(ideal_vertex_coords);
     if (!FProps.is_valid()) Base::mesh().add_property(FProps);
     
+
+    // print simplification parameters
+    std::cout<< "Lindstrom-Turk memoryless simplification options"<< "\n"
+            << " - " << "vertex selection mode = "<< ((mod == SPACE) ? "SPACE" : "LINE") << "\n"
+            << " - " << "boundary lock = "<< ((lock_boundary_edges) ? 
+                                            "True (mesh boundary wont move)" : "False") <<"\n"
+            << std::endl;
+
 
     typename Mesh::HalfedgeIter he_it = Base::mesh().halfedges_begin(),
                                 he_end = Base::mesh().halfedges_end();
@@ -120,7 +131,7 @@ initialize()
 
 template<class DecimaterType>
 float
-ModLindTurkT<DecimaterType>::
+ModMemorylessT<DecimaterType>::
 collapse_priority(const CollapseInfo& _ci) 
 {
     // only take not locked halfedge, and halfedges, whose opposite halfedge has not calculated error yet
@@ -374,7 +385,7 @@ collapse_priority(const CollapseInfo& _ci)
 
 template<class DecimaterType>
 void
-ModLindTurkT<DecimaterType>::
+ModMemorylessT<DecimaterType>::
 calc_face_normal_and_det(const FaceHandle& fh) 
 {
     Eigen::Matrix3d fv_coords;
@@ -398,7 +409,7 @@ calc_face_normal_and_det(const FaceHandle& fh)
 
 template<class DecimaterType>
 bool
-ModLindTurkT<DecimaterType>::
+ModMemorylessT<DecimaterType>::
 is_alpha_compatible(const HalfedgeHandle& heh, const Eigen::Vector3d& constr)
 {   
     // a1 != null vector
@@ -422,7 +433,7 @@ is_alpha_compatible(const HalfedgeHandle& heh, const Eigen::Vector3d& constr)
 
 template<class DecimaterType>
 void
-ModLindTurkT<DecimaterType>::
+ModMemorylessT<DecimaterType>::
 add_constraint( const HalfedgeHandle& heh, 
                 const Eigen::Vector3d& constr, 
                 const double& rhs_)
@@ -436,7 +447,7 @@ add_constraint( const HalfedgeHandle& heh,
 
 template<class DecimaterType>
 void
-ModLindTurkT<DecimaterType>::
+ModMemorylessT<DecimaterType>::
 calc_remaining_constraints( const HalfedgeHandle& heh,
                             const Eigen::Matrix3d& Hessian, 
                             const Eigen::Vector3d& c)
