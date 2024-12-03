@@ -75,6 +75,7 @@
 #include <OpenMesh/Tools/Decimater/ModProgMeshT.hh>
 #include <OpenMesh/Tools/Decimater/ModIndependentSetsT.hh>
 #include <OpenMesh/Tools/Decimater/ModRoundnessT.hh>
+#include <OpenMesh/Tools/Decimater/ModMemorylessT.hh>
 
 //----------------------------------------------------------------- traits ----
 
@@ -130,8 +131,9 @@ struct DecOptions
   CmdOption<float>       ND;   // Normal deviation
   CmdOption<float>       NF;   // Normal flipping
   CmdOption<std::string> PM;   // Progressive Mesh
-  CmdOption<float>       Q;    // Quadrics
+  CmdOption<std::string> Q;    // Quadrics = Garland-Heckbert
   CmdOption<float>       R;    // Roundness
+  CmdOption<std::string> ML;   // Memoryless simplification = Lindstrom-Turk
 
   template <typename T>
   bool init( CmdOption<T>& _o, const std::string& _val )
@@ -179,6 +181,7 @@ struct DecOptions
     if (name == "PM") return init(PM, value);
     if (name == "Q")  return init(Q,  value);
     if (name == "R")  return init(R,  value);
+    if (name == "ML") return init(ML, value);
     return false;
   }
 
@@ -322,7 +325,7 @@ decimate(const std::string &_ifname,
      {
        decimater.add(modQ);
        if (_opt.Q.has_value())
-         decimater.module( modQ ).set_max_err( _opt.Q );
+         decimater.module(modQ).set_opts( _opt.Q );
        decimater.module(modQ).set_binary(false);
      }
 
@@ -336,6 +339,17 @@ decimate(const std::string &_ifname,
              !modQ.is_valid() ||
              !decimater.module(modQ).is_binary());
      }
+     
+     typename OpenMesh::Decimater::ModMemorylessT<Mesh>::Handle        modML;
+
+     if (_opt.ML.is_enabled())
+     {
+       decimater.add(modML);
+       if (_opt.ML.has_value())
+         decimater.module( modML ).set_opts( _opt.ML );
+     }
+
+     
 
      // ---- 3 - initialize decimater
 
@@ -552,8 +566,9 @@ void usage_and_exit(int xcode)
   std::cerr << "  ND[:angle]      - ModNormalDeviation*\n";
   std::cerr << "  NF[:angle]      - ModNormalFlipping\n";
   std::cerr << "  PM[:file name]  - ModProgMesh\n";
-  std::cerr << "  Q[:error]       - ModQuadric*\n";
+  std::cerr << "  Q[:min_mode,lock,err] - ModQuadric*(default min_mode = 0, default lock = false, default max_err = none)\n";
   std::cerr << "  R[:angle]       - ModRoundness\n";
+  std::cerr << "  ML[:min_mode,lock]  - ModMemoryless(default min_mode = SPACE, default lock = false)\n";
   std::cerr << "    0 < angle < 60\n";
   std::cerr << "  *: priority module. Decimater needs one of them (not more).\n";
 

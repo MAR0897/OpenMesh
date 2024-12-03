@@ -161,7 +161,7 @@ size_t DecimaterT<Mesh>::decimate(size_t _n_collapses, bool _only_selected) {
   typedef std::vector<typename Mesh::VertexHandle> Support;
   typedef typename Support::iterator SupportIterator;
 
-  Support support(15);
+  Support support;
   SupportIterator s_it, s_end;
 
   // check _n_collapses
@@ -207,11 +207,6 @@ size_t DecimaterT<Mesh>::decimate(size_t _n_collapses, bool _only_selected) {
     if (!this->is_collapse_legal(ci))
       continue;
 
-    // store support (= one ring of *vp)
-    vv_it = mesh_.vv_iter(ci.v0);
-    support.clear();
-    for (; vv_it.is_valid(); ++vv_it)
-      support.push_back(*vv_it);
 
     // pre-processing
     this->preprocess_collapse(ci);
@@ -231,6 +226,15 @@ size_t DecimaterT<Mesh>::decimate(size_t _n_collapses, bool _only_selected) {
 
     // post-process collapse
     this->postprocess_collapse(ci);
+
+
+    // store support (= one ring of v1)
+    vv_it = mesh_.vv_iter(ci.v1);
+    support.clear();
+    support.emplace_back(ci.v1);
+    for (; vv_it.is_valid(); ++vv_it) {
+      support.emplace_back(*vv_it);
+    }
 
     // update heap (former one ring of decimated vertex)
     for (s_it = support.begin(), s_end = support.end(); s_it != s_end; ++s_it) {
