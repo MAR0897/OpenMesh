@@ -101,7 +101,7 @@ typedef OpenMesh::Decimater::DecimaterT<ArrayTriMesh>   Decimater;
 
 //---------------------------------------------------------------- globals ----
 
-int gverbose = 1;
+int gverbose = 0;
 int gdebug   = 0;
 
 
