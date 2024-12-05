@@ -100,28 +100,38 @@ public:
    * @brief Perform a number of collapses on the mesh.
    * @param _n_collapses Desired number of collapses. If zero (default), attempt
    *                     to do as many collapses as possible.
+   * @param _bigger_support Memoryless simplification and some versions 
+   *                        of Quadric simplification need to recalculate neightbor 
+   *                        edges of remaining vertex AFTER collapse as all neighboring
+   *                        faces of vertices v0 and v1 (which define edge that is going
+   *                        to be collapsed) change topologically.
    * @param _only_selected  Only consider vertices which are selected for decimation
    * @return Number of collapses that were actually performed.
    * @note This operation only marks the removed mesh elements for deletion. In
    *       order to actually remove the decimated elements from the mesh, a
    *       subsequent call to ArrayKernel::garbage_collection() is required.
    */
-  size_t decimate( size_t _n_collapses = 0 , bool _only_selected = false);
+  size_t decimate( size_t _n_collapses = 0 , bool _bigger_support = false, bool _only_selected = false);
 
   /**
    * @brief Decimate the mesh to a desired target vertex complexity.
    * @param _n_vertices Target complexity, i.e. desired number of remaining
    *                    vertices after decimation.
+   * @param _bigger_support Memoryless simplification and some versions 
+   *                        of Quadric simplification need to recalculate neightbor 
+   *                        edges of remaining vertex AFTER collapse as all neighboring
+   *                        faces of vertices v0 and v1 (which define edge that is going
+   *                        to be collapsed) change topologically.
    * @param _only_selected  Only consider vertices which are selected for decimation
    * @return Number of collapses that were actually performed.
    * @note This operation only marks the removed mesh elements for deletion. In
    *       order to actually remove the decimated elements from the mesh, a
    *       subsequent call to ArrayKernel::garbage_collection() is required.
    */
-  size_t decimate_to( size_t  _n_vertices , bool _only_selected = false)
+  size_t decimate_to( size_t  _n_vertices , bool _bigger_support = false, bool _only_selected = false)
   {
     return ( (_n_vertices < this->mesh().n_vertices()) ?
-	     decimate( this->mesh().n_vertices() - _n_vertices , _only_selected ) : 0 );
+	     decimate( this->mesh().n_vertices() - _n_vertices , _bigger_support, _only_selected ) : 0 );
   }
 
   /**
@@ -129,6 +139,11 @@ public:
    *        complexity is achieved.
    * @param _n_vertices Target vertex complexity.
    * @param _n_faces Target face complexity.
+   * @param _bigger_support Memoryless simplification and some versions 
+   *                        of Quadric simplification need to recalculate neightbor 
+   *                        edges of remaining vertex AFTER collapse as all neighboring
+   *                        faces of vertices v0 and v1 (which define edge that is going
+   *                        to be collapsed) change topologically.
    * @param _only_selected  Only consider vertices which are selected for decimation
    * @return Number of collapses that were actually performed.
    * @note Decimation stops as soon as either one of the two complexity bounds
@@ -137,7 +152,7 @@ public:
    *       order to actually remove the decimated elements from the mesh, a
    *       subsequent call to ArrayKernel::garbage_collection() is required.
    */
-  size_t decimate_to_faces( size_t  _n_vertices=0, size_t _n_faces=0 , bool _only_selected = false);
+  size_t decimate_to_faces( size_t  _n_vertices=0, size_t _n_faces=0 , bool _bigger_support = false, bool _only_selected = false);
 
 public:
 
