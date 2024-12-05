@@ -66,7 +66,7 @@
 
 namespace OpenMesh  {
 namespace Decimater {
-
+  
 
 //== CLASS DEFINITION =========================================================
 
@@ -172,6 +172,13 @@ public: // specific methods
 
   /// Return value of max. allowed error.
   double max_err() const { return max_err_; }
+
+  // Return value of decimation mode to signal the decimation function
+  // to use bigger support of vertices that need to recalculate error
+  bool needs_bigger_support() const {
+    if (mod == DEFAULT_OP) return false;
+    return true;
+  }
 
   // Parse simplification parameters string
   void set_opts(const std::string& opts) {

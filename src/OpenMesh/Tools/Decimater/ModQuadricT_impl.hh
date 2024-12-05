@@ -304,7 +304,7 @@ collapse_priority(const CollapseInfo& _ci)
       //=======================================================================
 
       // error is calculated, so update property and return error
-      if (mod != 0) Base::mesh().property(error_calculated, _ci.v0v1) = true;
+      if (mod != DEFAULT_OP) Base::mesh().property(error_calculated, _ci.v0v1) = true;
       return float( (err < max_err_) ? err : float( Base::ILLEGAL_COLLAPSE ) );
     }
 

@@ -147,7 +147,7 @@ void DecimaterT<Mesh>::heap_vertex(VertexHandle _vh) {
 
 //-----------------------------------------------------------------------------
 template<class Mesh>
-size_t DecimaterT<Mesh>::decimate(size_t _n_collapses, bool _only_selected) {
+size_t DecimaterT<Mesh>::decimate(size_t _n_collapses, bool _bigger_support, bool _only_selected) {
 
   if (!this->is_initialized())
     return 0;
@@ -207,6 +207,14 @@ size_t DecimaterT<Mesh>::decimate(size_t _n_collapses, bool _only_selected) {
     if (!this->is_collapse_legal(ci))
       continue;
 
+    // store support (= one ring of *vp)
+    if (!_bigger_support) {
+      vv_it = mesh_.vv_iter(ci.v0);
+      support.clear();
+      for (; vv_it.is_valid(); ++vv_it)
+        support.push_back(*vv_it);
+    }
+  
 
     // pre-processing
     this->preprocess_collapse(ci);
@@ -227,14 +235,16 @@ size_t DecimaterT<Mesh>::decimate(size_t _n_collapses, bool _only_selected) {
     // post-process collapse
     this->postprocess_collapse(ci);
 
-
-    // store support (= one ring of v1)
-    vv_it = mesh_.vv_iter(ci.v1);
-    support.clear();
-    support.emplace_back(ci.v1);
-    for (; vv_it.is_valid(); ++vv_it) {
-      support.emplace_back(*vv_it);
+    // or else store support as one ring of v1, including v1,
+    // if the simplification algorithm needs it
+    if (_bigger_support) {
+      vv_it = mesh_.vv_iter(ci.v1);
+      support.clear();
+      support.emplace_back(ci.v1);
+      for (; vv_it.is_valid(); ++vv_it)
+        support.emplace_back(*vv_it);
     }
+
 
     // update heap (former one ring of decimated vertex)
     for (s_it = support.begin(), s_end = support.end(); s_it != s_end; ++s_it) {
@@ -251,8 +261,6 @@ size_t DecimaterT<Mesh>::decimate(size_t _n_collapses, bool _only_selected) {
   // delete heap
   heap_.reset();
 
-
-
   // DON'T do garbage collection here! It's up to the application.
   return n_collapses;
 }
@@ -260,7 +268,7 @@ size_t DecimaterT<Mesh>::decimate(size_t _n_collapses, bool _only_selected) {
 //-----------------------------------------------------------------------------
 
 template<class Mesh>
-size_t DecimaterT<Mesh>::decimate_to_faces(size_t _nv, size_t _nf, bool _only_selected) {
+size_t DecimaterT<Mesh>::decimate_to_faces(size_t _nv, size_t _nf, bool _bigger_support, bool _only_selected) {
 
   if (!this->is_initialized())
     return 0;
@@ -279,7 +287,7 @@ size_t DecimaterT<Mesh>::decimate_to_faces(size_t _nv, size_t _nf, bool _only_se
   typedef std::vector<typename Mesh::VertexHandle> Support;
   typedef typename Support::iterator SupportIterator;
 
-  Support support(15);
+  Support support;
   SupportIterator s_it, s_end;
 
   // initialize heap
@@ -317,10 +325,12 @@ size_t DecimaterT<Mesh>::decimate_to_faces(size_t _nv, size_t _nf, bool _only_se
       continue;
 
     // store support (= one ring of *vp)
-    vv_it = mesh_.vv_iter(ci.v0);
-    support.clear();
-    for (; vv_it.is_valid(); ++vv_it)
-      support.push_back(*vv_it);
+    if (!_bigger_support) {
+      vv_it = mesh_.vv_iter(ci.v0);
+      support.clear();
+      for (; vv_it.is_valid(); ++vv_it)
+        support.push_back(*vv_it);
+    }
 
     // adjust complexity in advance (need boundary status)
     ++n_collapses;
@@ -347,6 +357,16 @@ size_t DecimaterT<Mesh>::decimate_to_faces(size_t _nv, size_t _nf, bool _only_se
 
     // post-process collapse
     this->postprocess_collapse(ci);
+
+    // or else store support as one ring of v1, including v1,
+    // if the simplification algorithm needs it
+    if (_bigger_support) {
+      vv_it = mesh_.vv_iter(ci.v1);
+      support.clear();
+      support.emplace_back(ci.v1);
+      for (; vv_it.is_valid(); ++vv_it)
+        support.emplace_back(*vv_it);
+    }
 
     // update heap (former one ring of decimated vertex)
     for (s_it = support.begin(), s_end = support.end(); s_it != s_end; ++s_it) {

@@ -101,7 +101,7 @@ typedef OpenMesh::Decimater::DecimaterT<ArrayTriMesh>   Decimater;
 
 //---------------------------------------------------------------- globals ----
 
-int gverbose = 0;
+int gverbose = 1;
 int gdebug   = 0;
 
 
@@ -258,7 +258,12 @@ decimate(const std::string &_ifname,
      if (gverbose)
        clog << "  register modules" << endl;
 
-
+     // If enabled, all decimate functions defined in DecimaterT.hh will recalculte 
+     // more vertices to ensure correctness of the simplification algorithm.
+     // Used in Memoryless simplification and versions 1, 2, 3 of Quadric
+     // simplification. 
+     // Check DecimaterT_impl.hh for details
+     bool needs_bigger_support = false;
 
      typename OpenMesh::Decimater::ModAspectRatioT<Mesh>::Handle modAR;
 
@@ -349,7 +354,12 @@ decimate(const std::string &_ifname,
          decimater.module( modML ).set_opts( _opt.ML );
      }
 
-     
+
+     // set value to true, if required by the simplification algorithm
+     if (_opt.ML.is_enabled()) needs_bigger_support = true;
+     else if (_opt.Q.is_enabled()) if (decimater.module(modQ).needs_bigger_support()) 
+      needs_bigger_support = true;
+
 
      // ---- 3 - initialize decimater
 
@@ -387,17 +397,17 @@ decimate(const std::string &_ifname,
      timer.start();
      size_t rc = 0;
      if (_opt.n_collapses < 0.0)
-       rc = decimater.decimate_to( size_t(-_opt.n_collapses) );
+       rc = decimater.decimate_to( size_t(-_opt.n_collapses), needs_bigger_support );
      else if (_opt.n_collapses >= 1.0 || _opt.n_collapses == 0.0)
-       rc = decimater.decimate( size_t(_opt.n_collapses) );
+       rc = decimater.decimate( size_t(_opt.n_collapses), needs_bigger_support );
      else if (_opt.n_collapses > 0.0f)
-       rc = decimater.decimate_to(size_t(mesh.n_vertices()*_opt.n_collapses));
+       rc = decimater.decimate_to(size_t(mesh.n_vertices()*_opt.n_collapses), needs_bigger_support);
      timer.stop();
 
      // ---- 5 - write progmesh file for progviewer (before garbage collection!)
 
-     if ( _opt.PM.has_value() )
-       decimater.module(modPM).write( _opt.PM );
+      if ( _opt.PM.has_value() )
+        decimater.module(modPM).write( _opt.PM );
 
      // ---- 6 - throw away all tagged edges
 
