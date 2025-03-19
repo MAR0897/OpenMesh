@@ -21,6 +21,8 @@ else ()
   vci_add_executable (DecimaterGui ${sources} ${headers} )
 endif ()
 
+find_package(Eigen3)
+
 target_link_libraries (DecimaterGui
   OpenMeshCore
   OpenMeshTools
@@ -28,6 +30,7 @@ target_link_libraries (DecimaterGui
   ${QT_TARGET}::Widgets
   ${QT_TARGET}::Gui
   ${OPENGL_LIBRARIES}
+  Eigen3::Eigen
 )
 
 if (QT_VERSION_MAJOR GREATER 5)
